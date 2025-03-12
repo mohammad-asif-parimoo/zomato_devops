@@ -7,16 +7,21 @@ Deployment of ZOMATO Project
 2. Connect to the instance
 
 3. Update the packages
+```
 $ switch to root user ---> sudo su
 $ sudo apt update -y
+```
 
-4. Install AWS CLI
+5. Install AWS CLI
+```
 sudo apt install unzip -y
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
 unzip awscliv2.zip
 sudo ./aws/install
+```
 
-5. Install Jenkins on Ubuntu
+6. Install Jenkins on Ubuntu
+```
 (Reference URL for commands: https://www.jenkins.io/doc/book/installing/linux/#debianubuntu)
 #!/bin/bash
 sudo apt update -y
@@ -31,8 +36,9 @@ sudo apt-get update -y
 sudo apt-get install jenkins -y
 sudo systemctl start jenkins
 sudo systemctl status jenkins
+```
 
-Verifiy Jenkins installation: jenkins --version
+Verifiy Jenkins installation: ```jenkins --version```
 
 5.1. Open Port No. 8080 for VM and access Jenkins
 5.2. Setup Jenkins by following the necessary steps
@@ -41,6 +47,7 @@ Verifiy Jenkins installation: jenkins --version
 (Reference URL for commands: https://docs.docker.com/engine/install/ubuntu/)
 
 # Add Docker's official GPG key:
+```
 sudo apt-get update
 sudo apt-get install ca-certificates curl
 sudo install -m 0755 -d /etc/apt/keyrings
@@ -57,22 +64,27 @@ sudo usermod -aG docker ubuntu
 sudo chmod 777 /var/run/docker.sock
 newgrp docker
 sudo systemctl status docker
+```
 
-Verifiy Docker installation: docker --version
+Verifiy Docker installation: ```docker --version```
 
 7. Install Trivy on Ubuntu
 (Reference URL for commands: https://aquasecurity.github.io/trivy/v0.55/getting-started/installation/)
+```
 sudo apt-get install wget apt-transport-https gnupg
 wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dearmor | sudo tee /usr/share/keyrings/trivy.gpg > /dev/null
 echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb generic main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
 sudo apt-get update
 sudo apt-get install trivy
+```
 
-8. Verifiy Trivy installation: trivy --version
+8. Verifiy Trivy installation: ``` trivy --version```
 
 9. Install SonarQube using Docker
+```
 $ docker run -d --name sonar -p 9000:9000 sonarqube:lts-community
 $ docker ps (You can see SonarQube container)
+```
 
 <Configure the Jenkins now>
 
@@ -231,24 +243,33 @@ We will install Grafana, Prometheus, Node Exporter in the above instance and the
 15.2. Installing Prometheus
 --------------------------------------------------
 First, create a dedicated Linux user for Prometheus and download Prometheus
+```
 sudo useradd --system --no-create-home --shell /bin/false prometheus
 wget https://github.com/prometheus/prometheus/releases/download/v2.47.1/prometheus-2.47.1.linux-amd64.tar.gz
+```
 
 Extract Prometheus files, move them, and create directories:
+```
 tar -xvf prometheus-2.47.1.linux-amd64.tar.gz
 cd prometheus-2.47.1.linux-amd64/
 sudo mkdir -p /data /etc/prometheus
 sudo mv prometheus promtool /usr/local/bin/
 sudo mv consoles/ console_libraries/ /etc/prometheus/
 sudo mv prometheus.yml /etc/prometheus/prometheus.yml
+```
 
 Set ownership for directories:
+```
 sudo chown -R prometheus:prometheus /etc/prometheus/ /data/
+```
 
 Create a systemd unit configuration file for Prometheus:
+```
 sudo vi /etc/systemd/system/prometheus.service
+```
 
 Add the following content to the prometheus.service file:
+```
 [Unit]
 Description=Prometheus
 Wants=network-online.target
@@ -273,6 +294,7 @@ ExecStart=/usr/local/bin/prometheus \
 
 [Install]
 WantedBy=multi-user.target
+```
 
 Explanation of the key elements in the above prometheus.service file:
 User and Group specify the Linux user and group under which Prometheus will run.
@@ -282,11 +304,15 @@ web.enable-lifecycle allows for management of Prometheus through API calls.
 
 
 Enable and start Prometheus:
+```
 sudo systemctl enable prometheus
 sudo systemctl start prometheus
+```
 
 Verify Prometheus's status:
+```
 sudo systemctl status prometheus
+```
 
 Press Control+c to come out
 
@@ -299,22 +325,32 @@ Click on 'Status' dropdown ---> Click on 'Targets' ---> You can see 'Prometheus 
 --------------------------------------------------
 15.3. Installing Node Exporter 
 --------------------------------------------------
-cd 
+Go to root path again:
+```
+cd
+```
 You are in ~ path now
 
 Create a system user for Node Exporter and download Node Exporter:
+```
 sudo useradd --system --no-create-home --shell /bin/false node_exporter
 wget https://github.com/prometheus/node_exporter/releases/download/v1.6.1/node_exporter-1.6.1.linux-amd64.tar.gz
+```
 
 Extract Node Exporter files, move the binary, and clean up:
+```
 tar -xvf node_exporter-1.6.1.linux-amd64.tar.gz
 sudo mv node_exporter-1.6.1.linux-amd64/node_exporter /usr/local/bin/
 rm -rf node_exporter*
+```
 
 Create a systemd unit configuration file for Node Exporter:
+```
 sudo vi /etc/systemd/system/node_exporter.service
+```
 
 Add the following content to the node_exporter.service file:
+```
 [Unit]
 Description=Node Exporter
 Wants=network-online.target
@@ -333,15 +369,19 @@ ExecStart=/usr/local/bin/node_exporter --collector.logind
 
 [Install]
 WantedBy=multi-user.target
+```
 
 Note: Replace --collector.logind with any additional flags as needed.
 
 Enable and start Node Exporter:
+```
 sudo systemctl enable node_exporter
 sudo systemctl start node_exporter
-
+```
 Verify the Node Exporter's status:
+```
 sudo systemctl status node_exporter
+```
 You can see "active (running)" in green colour
 Press control+c to come out of the file
 
@@ -356,7 +396,7 @@ Prometheus Configuration:
 
 To configure Prometheus to scrape metrics from Node Exporter and Jenkins, you need to modify the prometheus.yml file. 
 The path of prometheus.yml is; cd /etc/prometheus/ ----> ls -l ----> You can see the "prometheus.yml" file ----> sudo vi prometheus.yml ----> You will see the content and also there is a default job called "Prometheus" Paste the below content at the end of the file;
-
+```
   - job_name: 'node_exporter'
     static_configs:
       - targets: ['<MonitoringVMip>:9100']
@@ -365,16 +405,21 @@ The path of prometheus.yml is; cd /etc/prometheus/ ----> ls -l ----> You can see
     metrics_path: '/prometheus'
     static_configs:
       - targets: ['<your-jenkins-ip>:<your-jenkins-port>']
+```
 
  In the above, replace <your-jenkins-ip> and <your-jenkins-port> with the appropriate IPs ----> esc ----> :wq
 
 Check the validity of the configuration file:
+```
 promtool check config /etc/prometheus/prometheus.yml
+```
 
 You should see "SUCCESS" when you run the above command, it means every configuration made so far is good.
 
 Reload the Prometheus configuration without restarting:
+```
 curl -X POST http://localhost:9090/-/reload
+```
 
 Access Prometheus in browser (if already opened, just reload the page):
 http://<your-prometheus-ip>:9090/targets
@@ -393,35 +438,49 @@ Install Grafana on Monitoring Server;
 
 Step 1: Install Dependencies:
 First, ensure that all necessary dependencies are installed:
+```
 sudo apt-get update
 sudo apt-get install -y apt-transport-https software-properties-common
+```
 
 Step 2: Add the GPG Key:
 cd ---> You are now in ~ path
 Add the GPG key for Grafana:
+```
 wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add -
+```
 
 You should see OK when executed the above command.
 
 Step 3: Add Grafana Repository:
 Add the repository for Grafana stable releases:
+```
 echo "deb https://packages.grafana.com/oss/deb stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
+```
 
 Step 4: Update and Install Grafana:
 Update the package list and install Grafana:
+```
 sudo apt-get update
 sudo apt-get -y install grafana
+```
 
 Step 5: Enable and Start Grafana Service:
 To automatically start Grafana after a reboot, enable the service:
+```
 sudo systemctl enable grafana-server
+```
 
 Start Grafana:
+```
 sudo systemctl start grafana-server
+```
 
 Step 6: Check Grafana Status:
 Verify the status of the Grafana service to ensure it's running correctly:
+```
 sudo systemctl status grafana-server
+```
 
 You should see "Active (running)" in green colour
 Press control+c to come out
@@ -452,28 +511,23 @@ Note 2: Run the VS Code Editor/Power Shell/Command Prompt/Terminal as Administra
 Open vs code editor and execute the below commands; 
 Step 01: Create EKS Cluster using eksctl
 # Create Cluster. I will keep the cluster name as "zomato-cluster"
+```
 eksctl create cluster --name=zomato-cluster \
                       --region=ap-south-1 \
                       --zones=ap-south-1a,ap-south-1c \
                       --without-nodegroup                  
+```
 
 If you see any error while executing the above commands in VS Code Editor, it is due to how PowerShell interprets backslashes (\) as line continuation characters. Unlike Unix-like shells, PowerShell does not support line continuation in this way.
 
 To resolve this issue, you can either write the entire command on a single line or use a different method for line continuation. Here are the two approaches:
 
 Approach 1: Single Line Command
+
 Simply run the entire command in one line without using backslashes for line continuation:
-eksctl create cluster --name=zomato-cluster --region=ap-south-1 --zones=ap-south-1a,ap-south-1c --without-nodegroup
 
+``` eksctl create cluster --name=zomato-cluster --region=ap-south-1 --zones=ap-south-1a,ap-south-1c --without-nodegroup ```
 
-Approach 2: Use PowerShell’s Backtick for Line Continuation
-If you want to split the command across multiple lines, you can use the backtick character (`) in PowerShell for line continuation:
-eksctl create cluster --name=zomato-cluster `
-                      --region=ap-south-1 `
-                      --zones=ap-south-1a,ap-south-1c `
-                      --without-nodegroup
-
-Note: Make sure there is no space after the backtick.
 
 It will take atleast 20-25 minutes for the cluster to create.
 
@@ -481,7 +535,9 @@ To verify the cluster creation ---> Goto Cloud Formation service in AWS ----> Yo
 Once the cluster is ready, you will see "EKS Cluster "zomato-cluster" in "us-east-1" region is ready" in vs code editor. wait till you see this.
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # Get List of clusters
+```
 eksctl get cluster
+```
 
 Execute the below in vs code editor;
 
@@ -490,30 +546,39 @@ To enable and use AWS IAM roles for Kubernetes service accounts on our EKS clust
 To do so using eksctl we can use the below commands.
 
 # Template
+```
 eksctl utils associate-iam-oidc-provider \
     --region region-code \
     --cluster <cluster-name> \
     --approve
+```
 
 # Replace with region & cluster name
+```
 eksctl utils associate-iam-oidc-provider \
     --region ap-south-1 \
     --cluster zomato-cluster \
     --approve
+```
 
 (OR)
+```
 eksctl utils associate-iam-oidc-provider --region ap-south-1 --cluster zomato-cluster --approve
+```
 
 (OR)
+```
 eksctl utils associate-iam-oidc-provider `
     --region uap-south-1 `
     --cluster zomato-cluster `
     --approve
+```
 
 Step 03: Create Node Group with additional Add-Ons in Public Subnets
 These add-ons will create the respective IAM policies for us automatically within our Node Group role.
 
 # Create Public Node Group   
+```
 eksctl create nodegroup --cluster=zomato-cluster \
                        --region=ap-south-1 \
                        --name=zomato-ng-public1 \
@@ -530,7 +595,7 @@ eksctl create nodegroup --cluster=zomato-cluster \
                        --full-ecr-access \
                        --appmesh-access \
                        --alb-ingress-access
-
+```
 
 Step 05: Verify Cluster & Nodes
 Goto EKS Service in AWS and check for the cluster creation
@@ -546,22 +611,28 @@ Deploy the same application in the EKS cluster also
 Inorder to monitor k8s with Prometheus, we need to install ArgoCD. Lets do that
 Execute the below commands in vs code editor
 
+```
 kubectl create namespace argocd
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v2.4.7/manifests/install.yaml
+```
 
-wait for sometime till the namespace gets created.
+Wait for sometime till the namespace gets created.
 The above command will create a namespace with "argocd" name
 
 By default the argo CD server is not publicly exposed, so we need to expose it publicly. To do that, execute the below command;
+```
 kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}'
+```
 
 (OR) Command Prompt Execution
+```
 kubectl patch svc argocd-server -n argocd -p "{\"spec\": {\"type\": \"LoadBalancer\"}}"
+```
 
 After successful execution you should see "patched"
 
-To see the namespace got created or not ----> kubectl get ns ----> you will see argocd namespace
-To see the pods available in the argocd namespace ----> kubectl get pods -n argocd ----> you will see the pods
+To see the namespace got created or not ----> ``` kubectl get ns ```----> you will see argocd namespace
+To see the pods available in the argocd namespace ----> ``` kubectl get pods -n argocd ``` ----> you will see the pods
 
 Wait for 5 minutes for the load balancer creation. Once the loadbalancer is created, we will get the load balancer url.
 
@@ -577,42 +648,63 @@ Install Node Exporter using Helm
 To begin monitoring your Kubernetes cluster, you'll install the Prometheus Node Exporter. This component allows you to collect system-level metrics from your cluster nodes. Here are the steps to install the Node Exporter using Helm:
 
 Add the Prometheus Community Helm repository:
+```
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+```
 
 Create a Kubernetes namespace for the Node Exporter:
+```
 kubectl create namespace prometheus-node-exporter
+```
 
 Install the Node Exporter using Helm:
+```
 helm install prometheus-node-exporter prometheus-community/prometheus-node-exporter --namespace prometheus-node-exporter
+```
 
 Lets continue with load balancer thing of previous step; execute the below in VS code editor
+```
 export ARGOCD_SERVER=`kubectl get svc argocd-server -n argocd -o json | jq --raw-output '.status.loadBalancer.ingress[0].hostname'`
+```
 
 Execute the below command in powershell, if the command doesn't get executed in VS Code Editor
+```
 $env:ARGOCD_SERVER = $(kubectl get svc argocd-server -n argocd -o json | jq --raw-output '.status.loadBalancer.ingress[0].hostname')
-
+```
 
 (Ref URL: https://archive.eksworkshop.com/intermediate/290_argocd/configure/)
 
 To get the loadbalancer url;
+```
 echo $ARGOCD_SERVER
+```
 
 Execute the below command in powershell, if the command doesn't get executed in VS Code Editor
+```
 echo $env:ARGOCD_SERVER
+```
 
 You will see the load balancer url, copy it and paste in browser. You will see the ArgoCD Homepage.
 Username is "admin"
 To get the password, execute the below command in vs code editor;
+```
 export ARGO_PWD=`kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d`
+```
 
 Execute the below command in powershell, if the command doesn't get executed in VS Code Editor
+```
 $env:ARGO_PWD = (kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | % { [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($_)) })
+```
 
 To see the password;
+```
 echo $ARGO_PWD
+```
 
 Execute the below command in powershell, if the command doesn't get executed in VS Code Editor
+```
 echo $env:ARGO_PWD
+```
 
 You will see the password. copy and paste it in the argo cd homepage --->login
 
@@ -638,20 +730,28 @@ Optional - do it at the end of complete demo
 **********************************************
 Step 06: Delete Node Group
 # List EKS Clusters
+```
 eksctl get clusters
+```
 
 # Capture Node Group name
+```
 eksctl get nodegroup --cluster=<clusterName>
 eksctl get nodegroup --cluster=zomato-cluster
+```
 
 # Delete Node Group
+```
 eksctl delete nodegroup --cluster=<clusterName> --name=<nodegroupName>
 eksctl delete nodegroup --cluster=zomato-cluster --name=zomato-ng-public1
+```
 
 Step 07: Delete Cluster
 # Delete Cluster
+```
 eksctl delete cluster <clusterName>
 eksctl delete cluster zomato-cluster
+```
 
 ==========================================================================================================================================================================================
 
