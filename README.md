@@ -103,6 +103,7 @@ Before pasting the pipeline script, do the following changes in the script
 *********************
 Pipeline Script
 *********************
+```
 pipeline {
     agent any
     tools {
@@ -201,16 +202,19 @@ pipeline {
     }
 }
 
+```
+
 
 
 If the build stage of "OWASP FS SCAN" shows 'UNSTABLE BUILD' replace the below script in OWASP FS SCAN stage
+```
 stage('OWASP FS SCAN') {
     steps {
         dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit --update -n', odcInstallation: 'DP-Check'
         dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
     }
 }
-
+```
 
 Let the pipeline gets built. Meanwhile we will create VMs for monitoring.
 
